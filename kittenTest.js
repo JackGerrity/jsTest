@@ -1,4 +1,5 @@
 /* Default Values */
+var color = '#53121c'
 var enableBuild = false;
 var enableFaith = false;
 var enableRes = false;
@@ -206,7 +207,7 @@ function updateAutoRes() {
     table.append('<tr><th>Resource</th><th>Limit</th><th>Action</th><th>Amount</th></tr>');
     for (i in autoRes)
         table.append('<tr style="background-color: ' + (i % 2 == 0 ? '#FFF' : '#CCC') + '"><td>' +
-            '<a id="resource' + i + '" href="#" onclick="enableResource(' + i + ')" style="font-weight: ' + (autoRes[i].enabled ? "bold" : "normal") + '">' +
+            '<a id="resource' + i + '" href="#" onclick="enableResource(' + i + ')" style="font-weight: ' + (autoRes[i].enabled ? "bold", 'color', color : "normal", 'color', color) + '">' +
             getCon(autoRes[i].condition, "resource") + '</a></td><td>' +
             getCon(autoRes[i].condition, "limit") + '</td><td>' +
             getAct(autoRes[i].action) + '</td><td>' +
@@ -238,7 +239,7 @@ function updateAutoBuild() {
         i++;
         if (i == 1)
             str += '<tr>';
-        str += '<td><a id="building' + j + '" href="#" onclick="enableBuilding(' + j + ')" style="font-weight: ' + (buildings[j].enabled ? "bold" : "normal") + '">' + buildings[j].name + '</a></td>';
+        str += '<td><a id="building' + j + '" href="#" onclick="enableBuilding(' + j + ')" style="font-weight: ' + (buildings[j].enabled ? "bold", 'color', color : "normal", 'color', color) + '">' + buildings[j].name + '</a></td>';
         if (i == 3) {
             str += '</tr>';
             i = 0;
@@ -283,19 +284,19 @@ function calcResource(j) {
 function enableResource(j) {
     autoRes[j].enabled = !autoRes[j].enabled;
     if (autoRes[j].enabled)
-        $("#resource" + j).css("font-weight", "bold");
+        $("#resource" + j).css("font-weight", "bold", 'color', color);
     else
-        $("#resource" + j).css("font-weight", "normal");
+        $("#resource" + j).css("font-weight", "normal", 'color', color);
     saveBot();
 }
 
 function enableBuilding(j) {
     buildings[j].enabled = !buildings[j].enabled;
     if (buildings[j].enabled) {
-        $("#building" + j).css("font-weight", "bold");
+        $("#building" + j).css("font-weight", "bold", 'color', color);
         autoBuild.push(buildings[j].name);
     } else {
-        $("#building" + j).css("font-weight", "normal");
+        $("#building" + j).css("font-weight", "normal", 'color', color);
         autoBuild.splice(autoBuild.indexOf(buildings[j].name), 1);
     }
     saveBot();
@@ -304,35 +305,35 @@ function enableBuilding(j) {
 function toggleBuild() {
     enableBuild = !enableBuild;
     if (enableBuild)
-        $("#toggleBuild").css("font-weight", "bold");
+        $("#toggleBuild").css("font-weight", "bold", 'color', color);
     else
-        $("#toggleBuild").css("font-weight", "normal");
+        $("#toggleBuild").css("font-weight", "normal", 'color', color);
     saveBot();
 }
 if (enableBuild)
-    $("#toggleBuild").css("font-weight", "bold");
+    $("#toggleBuild").css("font-weight", "bold", 'color', color);
 
 function toggleRes() {
     enableRes = !enableRes;
     if (enableRes)
-        $("#toggleRes").css("font-weight", "bold");
+        $("#toggleRes").css("font-weight", "bold", 'color', color);
     else
-        $("#toggleRes").css("font-weight", "normal");
+        $("#toggleRes").css("font-weight", "normal", 'color', color);
     saveBot();
 }
 if (enableRes)
-    $("#toggleRes").css("font-weight", "bold");
+    $("#toggleRes").css("font-weight", "bold", 'color', color);
 
 function toggleFaith() {
     enableFaith = !enableFaith;
     if (enableFaith)
-        $("#toggleFaith").css("font-weight", "bold");
+        $("#toggleFaith").css("font-weight", "bold", 'color', color);
     else
-        $("#toggleFaith").css("font-weight", "normal");
+        $("#toggleFaith").css("font-weight", "normal", 'color', color);
     saveBot();
 }
 if (enableFaith)
-    $("#toggleFaith").css("font-weight", "bold");
+    $("#toggleFaith").css("font-weight", "bold", 'color', color);
 
 //Fast Forward
 var TicksPerSecond = 5;
@@ -366,7 +367,7 @@ function toggleFF() {
     if (enableFF) {
         enableFF = false;
         clearInterval(fpstimer);
-        $("#botFF").css("font-weight", "normal");
+        $("#botFF").css("font-weight", "normal", 'color', color);
     } else {
         enableFF = true;
         fpstimer = setInterval(function() {
@@ -383,7 +384,7 @@ function toggleFF() {
             TicksPerSecond /= fps.last.length;
             $('#fps').text(Math.ceil(TicksPerSecond));
         }, 1000);
-        $("#botFF").css("font-weight", "bold");
+        $("#botFF").css("font-weight", "bold", 'color', color);
         _updFunc();
     }
 }
