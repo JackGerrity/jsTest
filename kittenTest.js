@@ -1,482 +1,389 @@
-// ==========================================
-// Begin Kitten Scientist's Automation Engine
-// ==========================================
+/* Default Values */
+var enableBuild = false;
+var enableFaith = false;
+var enableRes = false;
+var autoBuild = [];
+var autoRes = [
+               { condition: { resource: "catnip", limit: 0.95 }, 	action: { craft: "wood", amount: 300 } },
+               { condition: { resource: "wood", limit: 0.97 }, 		action: { craft: "beam", amount: 100 } },
+               { condition: { resource: "beam", limit: 25000 },		action: { craft: "scaffold", amount: 3 } },
+               { condition: { resource: "minerals", limit: 0.97 }, 	action: { craft: "slab", amount: 100 } },
+               { condition: { resource: "slab", limit: 50000},		action: [ { craft: "concrate", amount: 1 },
+										  { craft: "megalith", amount: 3 } ] },
+               { condition: { resource: "coal", limit: 0.95 }, 		action: { craft: "steel", amount: 5 } },
+               { condition: { resource: "iron", limit: 0.95 }, 		action: { craft: "plate", amount: 10 } },
+               { condition: { resource: "steel", limit: 5000 }, 	action: [ { craft: "gear", amount: 3 }, 
+                                                                	          { craft: "alloy", amount: 1 } ] },
+               { condition: [ { resource: "ivory", limit: 1000000}, 
+                              { resource: "gold", limit: 0.5 } ], 	action: { trade: 3, amount: 3 } },
+               { condition: [ { resource: "titanium", limit: 0.97},
+                              { resource: "gold", limit: 0.5 } ], 	action: { trade: 6, amount: 1 } },
+               { condition: { resource: "furs", limit: 2500 }, 		action: { craft: "parchment", amount: 3 } },
+               { condition: { resource: "parchment", limit: 2550 }, 	action: { craft: "manuscript", amount: 3 } },
+               { condition: { resource: "manuscript", limit: 1500 }, 	action: { craft: "compedium", amount: 1 } },
+               { condition: { resource: "compedium", limit: 500 }, 	action: { craft: "blueprint", amount: 1 } },
+          ];
 
-var version = 'Kitten Scientists version 1.1.5';
-var game = gamePage;
+//Reset interval before creating new
+if (typeof autoRun != "undefined") clearInterval(autoRun);
+autoRun = setInterval(function() {
+    var origTab = gamePage.activeTabId;
 
-var options = {
-    interval: 3000,
-    color: '#aa50fe', // dark purple
-    amount: {
-        consume: 0.5
-    },
-    auto: {
-        build: [
-            {name: 'field', require: 'catnip'},
-            {name: 'pasture', require: 'catnip'},
-            {name: 'library', require: 'wood'},
-            {name: 'academy', require: 'wood'},
-            {name: 'mine', require: 'wood'},
-            {name: 'barn', require: 'wood'},
-            {name: 'aqueduct', require: 'minerals'},
-            {name: 'lumberMill', require: 'minerals'},
-            {name: 'workshop', require: 'minerals'},
-            {name: 'unicornPasture', require: false}
-        ],
-        craft: [
-            {name: 'wood', require: 'catnip'},
-            {name: 'beam', require: 'wood'},
-            {name: 'slab', require: 'minerals'},
-            {name: 'steel', require: 'coal'},
-            {name: 'plate', require: 'iron'}
-        ],
-        house: [
-            {name: 'hut', require: 'wood'},
-            {name: 'logHouse', require: 'minerals'},
-            {name: 'mansion', require: 'titanium'}
-        ],
-        luxury: [
-            {name: 'manuscript', require: 'culture'},
-            {name: 'compendium', require: 'science'}
-        ]
-    },
-    limit: {
-        build: 0.75,
-        craft: 0.95,
-        house: 0.85,
-        hunt: 0.95,
-        luxury: 0.99,
-        faith: 0.99
-    },
-    stock: {
-        compendium: 500,
-        manuscript: 500,
-        parchment: 500
-    },
-    toggle: {
-        building: true,
-        crafting: true,
-        housing: true,
-        hunting: true,
-        luxury: true,
-        praising: true
+    //Star Events
+    $("#gameLog").find("input").click();
+
+    //Hunting
+    var catpower = gamePage.resPool.get('manpower');
+    if (catpower.value / catpower.maxValue > 0.95) {
+        $("a:contains('Send hunters')").click();
     }
-};
 
-// GameLog Modification
-// ====================
-
-var gameLog = com.nuclearunicorn.game.log.Console().static;
-
-var message = function () {
-    var args = Array.prototype.slice.call(arguments);
-    args[1] = args[1] || 'ks-default';
-
-    // update the color of the message immediately after adding
-    gameLog.msg.apply(gameLog, args);
-    $('.type_' + args[1]).css('color', options.color);
-};
-
-// Core Engine for Kitten Scientists
-// =================================
-
-var Engine = function () {
-    this.buildManager = new BuildManager();
-    this.craftManager = new CraftManager();
-};
-
-Engine.prototype = {
-    buildManager: undefined,
-    craftManager: undefined,
-    loop: undefined,
-    start: function () {
-        if (this.loop) return;
-
-        this.loop = setInterval(this.iterate.bind(this), options.interval);
-        message('Starting the kitten scientists!');
-    },
-    stop: function () {
-        if (!this.loop) return;
-
-        clearInterval(this.loop);
-        this.loop = undefined;
-        message('Freezing the kitten scientists!');
-    },
-    iterate: function () {
-        this.observeGameLog();
-        if (options.toggle.praising) this.praiseSun();
-        if (options.toggle.hunting) this.sendHunters();
-        if (options.toggle.crafting) this.startCrafts('craft', options.auto.craft);
-        if (options.toggle.building) this.startBuilds('build', options.auto.build);
-        if (options.toggle.housing) this.startBuilds('house', options.auto.house);
-    },
-    observeGameLog: function () {
-        $('#gameLog').find('input').click();
-    },
-    praiseSun: function () {
-        var currentTab = game.activeTabId;
-        var faith = this.craftManager.getResource('faith');
-
-        if (faith.value / faith.maxValue >= options.limit.faith) {
-            game.activeTabId = 'Religion';
-            game.render();
-
-            message('The sun has been praised!');
-            $(".nosel:contains('Praise the sun!')").click();
-
-            game.activeTabId = currentTab;
-            game.render();
-        }
-    },
-    sendHunters: function () {
-        var catpower = this.craftManager.getResource('manpower');
-        var workshop = game.workshop;
-        var parchment = workshop.getCraft('parchment');
-
-        if (catpower.value / catpower.maxValue > options.limit.hunt) {
-            if (parchment.unlocked) {
-                game.craftAll(parchment.name);
-                message('Auto Hunt: crafted all parchments');
+    //Building
+    if (enableBuild && gamePage.activeTabId == 'Bonfire') {
+        $('#gameContainerId .tabInner .btn span').each(function() {
+            var ma = $(this).text().match(/[\w .]+\w|\d+/g);
+            if (ma && ma.length >= 2 &&
+                autoBuild.indexOf(ma[0]) != -1 &&
+                !$(this).parent().parent().hasClass('disabled')) {
+                this.click();
+                gamePage.msg("Upgraded Building: " + ma[0] + " to " + (parseInt(ma[1]) + 1), "notice");
+				return false;
             }
+        });
+    }
 
-            if (options.toggle.luxury) this.startCrafts('luxury', options.auto.luxury);
-
-            message('Kittens Hunt: Hunters deployed!');
-            $("a:contains('Send hunters')").click();
-        }
-    },
-    startBuilds: function (type, builds) {
-        var buildManager = this.buildManager;
-        var craftManager = this.craftManager;
-        var limit = options.limit[type];
-
-        for (i in builds) {
-            var build = builds[i];
-            var require = !build.require ? !build.require : craftManager.getResource(build.require);
-
-            if (require === true || limit <= require.value / require.maxValue) {
-                buildManager.build(build.name);
-            }
-        }
-    },
-    startCrafts: function (type, crafts) {
-        var limit = options.limit[type];
-        var manager = this.craftManager;
-
-        for (i in crafts) {
-            var craft = crafts[i];
-            var require = manager.getResource(craft.require);
-
-            if (limit <= require.value / require.maxValue) {
-                manager.craft(craft.name, manager.getLowestCraftAmount(craft.name));
-            }
+    //Resources
+    if (enableRes) {
+        for (var i = 0; i < autoRes.length; i++) {
+            if (autoRes[i].enabled && checkConditions(autoRes[i].condition))
+                doActions(autoRes[i].action);
         }
     }
-};
 
-// Building manager
-// ================
-
-var BuildManager = function () {
-    this.craftManager = new CraftManager();
-};
-
-BuildManager.prototype = {
-    craftManager: undefined,
-    build: function (name) {
-        if (!this.isBuildable(name)) return;
-
-        var label = this.getBuild(name).label;
-        var button = $(".nosel:not('.disabled'):contains('" + label + "')");
-
-        if (button.length === 0) return;
-
-        button.click();
-        message('Kittens Build: +1 ' + label);
-    },
-    isBuildable: function (name) {
-        var buildable = this.getBuild(name).unlocked;
-
-        if (buildable) {
-            var manager = this.craftManager;
-            var prices = this.getPrices(name);
-
-            for (i in prices) {
-                var price = prices[i];
-
-                if (manager.getValueAvailable(price.name) < price.val) {
-                    buildable = false;
-                }
-            }
+    //Faith
+    if (enableFaith) {
+        var faith = gamePage.resPool.get('faith');
+        if (faith.value / faith.maxValue > 0.95) {
+            gamePage.activeTabId = 'Religion';
+            gamePage.render();
+            $(".btnContent:contains('Praise the sun')").click();
         }
-
-        return buildable;
-    },
-    getBuild: function (name) {
-        return game.bld.getBuilding(name);
-    },
-    getPrices: function (name) {
-        return game.bld.getPrices(name);
     }
-};
 
-// Crafting Manager
-// ================
-
-var CraftManager = function () {};
-
-CraftManager.prototype = {
-    craft: function (name, amount) {
-        amount = Math.floor(amount);
-
-        if (undefined === name || 1 > amount) return;
-        if (!this.canCraft(name, amount)) return;
-
-        var craft = this.getCraft(name);
-        var ratio = ('wood' === name) ? 'refineRatio' : 'craftRatio';
-
-        game.craft(craft.name, amount);
-
-        // determine actual amount after crafting upgrades
-        amount = (amount * (game.bld.getEffect(ratio) + 1)).toFixed(2);
-
-        message('Kittens Craft: +' + amount + ' ' + name);
-    },
-    canCraft: function (name, amount) {
-        var craft = this.getCraft(name);
-        var result = false;
-
-        if (craft.unlocked) {
-            result = true;
-
-            for (i in craft.prices) {
-                var price = craft.prices[i];
-                var value = this.getValueAvailable(price.name);
-
-                if (value < price.val * amount) {
-                    result = false;
-                }
-            }
-        }
-
-        return result;
-    },
-    getCraft: function (name) {
-        // adjust for spelling bug in core game logic
-        if ('compendium' === name) name = 'compedium';
-
-        return game.workshop.getCraft(name);
-    },
-    getLowestCraftAmount: function (name) {
-        var amount = 0;
-        var consume = options.amount.consume;
-        var materials = this.getMaterials(name);
-
-        for (i in materials) {
-            var total = this.getValueAvailable(i) * consume / materials[i];
-
-            amount = (0 === amount || total < amount) ? total : amount;
-        }
-
-        return amount;
-    },
-    getMaterials: function (name) {
-        var materials = {};
-        var prices = this.getCraft(name).prices;
-
-        for (i in prices) {
-            var price = prices[i];
-
-            materials[price.name] = price.val;
-        }
-
-        return materials;
-    },
-    getResource: function (name) {
-        // adjust for spelling bug in core game logic
-        if ('compendium' === name) name = 'compedium';
-
-        return game.resPool.get(name);
-    },
-    getValue: function (name) {
-        return this.getResource(name).value;
-    },
-    getValueAvailable: function (name) {
-        var value = this.getValue(name);
-        var stock = options.stock[name] || 0;
-
-        if ('catnip' === name) {
-            var resPerTick = game.getResourcePerTick(name, false, {
-                modifiers: {
-                    'catnip': 0.10 - game.calendar.getWeatherMod()
-                }});
-
-            if (resPerTick < 0) stock -= resPerTick * 202 * 5;
-        }
-
-        return value - stock;
+    if (gamePage.activeTabId != origTab) {
+        gamePage.activeTabId = origTab;
+        gamePage.render();
     }
+}, 1000);
+console.log("Kitten Bot Started");
+//Some styling upgrades
+$("#leftColumn")[0].style.width = "25%";
+$("#rightColumn")[0].style.width = "25%";
+
+var canCraft = function(res) {
+    var p = gamePage.workshop.getCraft(res.craft).prices;
+    for (var i = 0; i < p.length; i++) {
+        if (gamePage.resPool.get(p[i].name).value < p[i].val * res.amount)
+            return false;
+    }
+    return true;
 };
 
-// ==============================
-// Configure overall page display
-// ==============================
+function checkConditions(cond) {
+    var check = function(con) {
+        if (typeof con == "function")
+            return con();
+        var curRes = gamePage.resPool.get(con.resource);
+        return !((con.limit <= 1 && curRes.value / curRes.maxValue <= con.limit) ||
+            (con.limit > 1 && curRes.value < con.limit));
+    };
 
-var container = $('#game');
-var column = $('.column');
+    if (Array.isArray(cond)) {
+        for (var i in cond)
+            if (!check(cond[i]))
+                return false;
+        return true;
+    } else
+        return check(cond);
+}
 
-container.css({
-    fontFamily: 'Courier New',
-    fontSize: '12px',
-    minWidth: '1300px',
-    top: '32px'
-});
+function doActions(acts) {
+	var run = function(act) {
+		if (act.craft != undefined && canCraft(act)) {
+			if (act.amount == -1)
+				gamePage.craftAll(act.craft);
+			else
+				gamePage.craft(act.craft, act.amount);
+			//gamePage.msg("Crafted "+act.amount+" "+act.craft);
+		} else if (act.trade != undefined) {
+			var catpower = gamePage.resPool.get('manpower');
+			if (catpower.value >= 50 * act.amount) {
+				gamePage.activeTabId = 'Trade';
+				gamePage.render();
+				for (var j = 0; j < act.amount; j++)
+					$("span:contains('Send caravan')")[act.trade].click();
+				//gamePage.msg("Traded "+act.amount+"x with "+act.trade);
+			}
+		}
+	};
+	if (Array.isArray(acts)) {
+		for (var i in acts)
+			run(acts[i]);
+	} else
+		run(acts);
+}
 
-column.css({
-    minHeight: 'inherit',
-    maxWidth: 'inherit',
-    padding: '1%',
-    margin: 0
-});
+//Store Settings
+function saveBot() {
+    localStorage.setItem('enableBuild', enableBuild);
+    localStorage.setItem('enableFaith', enableFaith);
+    localStorage.setItem('enableRes', enableRes);
+    localStorage.setItem('autoBuild', JSON.stringify(autoBuild));
+    localStorage.setItem('autoRes', JSON.stringify(autoRes));
+}
 
-var left = $('#leftColumn');
-var middle = $('#midColumn');
-var right = $('#rightColumn');
+function loadBot() {
+    enableBuild = localStorage.getItem('enableBuild') || enableBuild;
+    enableFaith = localStorage.getItem('enableFaith', enableFaith) || enableFaith;
+    enableRes = localStorage.getItem('enableRes', enableRes) || enableRes;
+    var tmp = localStorage.getItem('autoBuild');
+    if (tmp)
+        autoBuild = JSON.parse(tmp);
+    tmp = localStorage.getItem('autoRes');
+    if (tmp)
+        autoRes = JSON.parse(tmp);
+}
+loadBot();
 
-left.css({
-    height: '92%',
-    width: '26%'
-});
+//UI
+$('#infoCol').remove();
+$('#game').append('\
+<div id="infoCol" class="column" style="margin-left: 5px; width: 300px;">\
+	<div style="float: right">\
+		FPS: <span id="fps">5</span>\
+	</div>\
+	<a href="#" onclick="updateBot()">Update</a> \
+	<a id="botFF" href="#" onclick="toggleFF()">FastForward</a> \
+	<br>\
+	<b>AutoRes:</b> \
+	<a id="toggleRes" href="#" onclick="toggleRes()">Enable</a><br>\
+	<table id="autoRes"></table>\
+	<hr />\
+	<b>AutoBuild:</b> \
+	<a id="toggleBuild" href="#" onclick="toggleBuild()">Enable</a><br>\
+	<table id="autoBuild"></table>\
+	<hr /> \
+	<b>AutoFaith:</b> \
+	<a id="toggleFaith" href="#" onclick="toggleFaith()">Enable</a><br>\
+</div>');
 
-middle.css({
-    marginTop: '1%',
-    height: '92%',
-    width: '48%'
-});
+function updateAutoRes() {
+	//Some helper functions to extract the right text
+    function getCon(con, val) {
+        var res = '';
+        if (Array.isArray(con)) {
+            for (j in con) res += con[j][val] + '<br>';
+            res.substr(0, res.length - 4);
+        } else res = con[val];
+        return res;
+    }
 
-right.css({
-    height: '92%',
-    width: '19%'
-});
+    function getAct(act) {
+        var res = '';
+        if (Array.isArray(act)) {
+            for (j in act) res += (act[j].craft ? act[j].craft : 'Trade: ' + act[j].trade) + '<br>';
+            res.substr(0, res.length - 4);
+        } else res = (act.craft ? act.craft : 'Trade: ' + act.trade);
+        return res;
+    }
 
-// Reconfigure dynamic page display
-// ================================
+    function canCalc(res) {
+        return Array.isArray(res.action) || res.action.trade || res.condition.limit > 1;
+    }
+	
+    var table = $("#autoRes");
+    table.empty();
+    table.append('<tr><th>Resource</th><th>Limit</th><th>Action</th><th>Amount</th></tr>');
+    for (i in autoRes)
+        table.append('<tr style="background-color: ' + (i % 2 == 0 ? '#FFF' : '#CCC') + '"><td>' +
+            '<a id="resource' + i + '" href="#" onclick="enableResource(' + i + ')" style="font-weight: ' + (autoRes[i].enabled ? "bold" : "normal") + '">' +
+            getCon(autoRes[i].condition, "resource") + '</a></td><td>' +
+            getCon(autoRes[i].condition, "limit") + '</td><td>' +
+            getAct(autoRes[i].action) + '</td><td>' +
+            getCon(autoRes[i].action, "amount") + '</td>' +
+            (canCalc(autoRes[i]) ? '' : '<td><a href="#" onclick="calcResource(' + i + ')" tooltip="Calculate Limit and Amount">Calc</a></td>') + '</tr>');
+}
 
-var addRule = function (rule) {
-    var sheets = document.styleSheets;
-    sheets[0].insertRule(rule, 1);
-};
-
-addRule('#gameLog .msg {'
-+ 'display: block;'
-+ '}');
-
-addRule('#resContainer .maxRes {'
-+ 'color: #676766;'
-+ '}');
-
-addRule('#game .btn {'
-+ 'border-radius: 0px;'
-+ 'font-family: "Courier New";'
-+ 'font-size: "10px";'
-+ 'margin: 0 0 7px 0;'
-+ '}');
-
-addRule('#ks-options ul {'
-+ 'list-style: none;'
-+ 'margin: 0 0 5px;'
-+ 'padding: 0;'
-+ '}');
-
-addRule('#ks-options ul:after {'
-+ 'clear: both;'
-+ 'content: " ";'
-+ 'display: block;'
-+ 'height: 0;'
-+ '}');
-
-addRule('#ks-options ul li {'
-+ 'display: block;'
-+ 'float: left;'
-+ 'width: 50%;'
-+ '}');
-
-// Add options element
-// ===================
-
-var getToggle = function (name, text) {
-    var li = $('<li/>');
-
-    var label = $('<label/>', {
-        'for': 'toggle-' + name,
-        text: text
+var buildings = [];
+function updateAutoBuild() {
+    buildings = [];
+    $('#gameContainerId .tabInner .btn span').each(function() {
+        var ma = $(this).text().match(/[\w .]+\w|\d+/g);
+        if (!ma || ma.length < 2) return;
+        buildings.push({
+            name: ma[0],
+            level: ma[1],
+            enabled: autoBuild.indexOf(ma[0]) != -1
+        });
     });
 
-    var toggle = $('<input/>', {
-        id: 'toggle-' + name,
-        type: 'checkbox',
-        checked: 'checked'
+    buildings.sort(function(a, b) {
+        return a.name.localeCompare(b.name);
     });
+    var table = $("#autoBuild");
+    table.empty();
+    var i = 0;
+    var str = '';
+    for (j in buildings) {
+        i++;
+        if (i == 1)
+            str += '<tr>';
+        str += '<td><a id="building' + j + '" href="#" onclick="enableBuilding(' + j + ')" style="font-weight: ' + (buildings[j].enabled ? "bold" : "normal") + '">' + buildings[j].name + '</a></td>';
+        if (i == 3) {
+            str += '</tr>';
+            i = 0;
+        }
+    }
+    if (i != 0)
+        str += '</tr>';
+    table.append(str);
+}
 
-    return li.append(toggle, label);
-};
+function updateBot() {
+    updateAutoRes();
+    updateAutoBuild();
+    saveBot();
+}
+updateAutoRes();
+updateAutoBuild();
 
-var optionsElement = $('<div/>', {id: 'ks-options', css: {marginBottom: '10px'}});
-var optionsListElement = $('<ul/>');
-var optionsTitleElement = $('<div/>', {
-    css: { borderBottom: '1px solid gray', marginBottom: '5px' },
-    text: version
-});
+// This is still experimental
+function calcResource(j) {
+    if (autoRes[j].condition.limit <= 1) {
+        var curRes = gamePage.resPool.get(autoRes[j].condition.resource);
+        var craftPrices = gamePage.workshop.getCraft(autoRes[j].action.craft).prices;
+        var min = 0;
+        for (i in craftPrices) {
+            craftPrices[i].res = gamePage.resPool.get(craftPrices[i].name);
+            am = Math.ceil((craftPrices[i].res.perTickUI * TicksPerSecond) / craftPrices[i].val);
+            if (am < min || min == 0)
+                min = am;
+        }
+        //console.log(curRes, craftPrices, min);
 
-optionsElement.append(optionsTitleElement);
+        autoRes[j].action.amount = min;
+    }
+	//TODO: Implement more scenarios
 
-optionsListElement.append(getToggle('engine', 'Engine').css('width', '100%'));
-optionsListElement.append(getToggle('crafting', 'Crafting'));
-optionsListElement.append(getToggle('housing', 'Housing'));
-optionsListElement.append(getToggle('building', 'Building'));
-optionsListElement.append(getToggle('praising', 'Faith'));
-optionsListElement.append(getToggle('hunting', 'Hunting'));
-optionsListElement.append(getToggle('luxury', 'Luxury'));
+    updateAutoRes();
+    saveBot();
+}
 
-// add the options above the game log
-right.prepend(optionsElement.append(optionsListElement));
+// Toggle Functions
+function enableResource(j) {
+    autoRes[j].enabled = !autoRes[j].enabled;
+    if (autoRes[j].enabled)
+        $("#resource" + j).css("font-weight", "bold");
+    else
+        $("#resource" + j).css("font-weight", "normal");
+    saveBot();
+}
 
-// Initialize and set toggles for Engine
-// =====================================
-
-var engine = new Engine();
-var toggleEngine = $('#toggle-engine');
-
-toggleEngine.on('change', function () {
-    if (toggleEngine.is(':checked')) {
-        engine.start();
+function enableBuilding(j) {
+    buildings[j].enabled = !buildings[j].enabled;
+    if (buildings[j].enabled) {
+        $("#building" + j).css("font-weight", "bold");
+        autoBuild.push(buildings[j].name);
     } else {
-        engine.stop();
+        $("#building" + j).css("font-weight", "normal");
+        autoBuild.splice(autoBuild.indexOf(buildings[j].name), 1);
     }
-});
+    saveBot();
+}
 
-toggleEngine.trigger('change');
+function toggleBuild() {
+    enableBuild = !enableBuild;
+    if (enableBuild)
+        $("#toggleBuild").css("font-weight", "bold");
+    else
+        $("#toggleBuild").css("font-weight", "normal");
+    saveBot();
+}
+if (enableBuild)
+    $("#toggleBuild").css("font-weight", "bold");
 
-// Add toggles for options
-// =======================
+function toggleRes() {
+    enableRes = !enableRes;
+    if (enableRes)
+        $("#toggleRes").css("font-weight", "bold");
+    else
+        $("#toggleRes").css("font-weight", "normal");
+    saveBot();
+}
+if (enableRes)
+    $("#toggleRes").css("font-weight", "bold");
 
-var autoOptions = ['building', 'crafting', 'housing', 'hunting', 'luxury', 'praising'];
+function toggleFaith() {
+    enableFaith = !enableFaith;
+    if (enableFaith)
+        $("#toggleFaith").css("font-weight", "bold");
+    else
+        $("#toggleFaith").css("font-weight", "normal");
+    saveBot();
+}
+if (enableFaith)
+    $("#toggleFaith").css("font-weight", "bold");
 
-var ucfirst = function (string) {
-    return string.charAt(0).toUpperCase() + string.slice(1);
+//Fast Forward
+var TicksPerSecond = 5;
+var fps = {
+    current: 0,
+    counter: 0,
+    last: []
 };
+var enableFF = false;
 
-$.each(autoOptions, function (event, option) {
-    var toggle = $('#toggle-' + option);
+function _updFunc() {
+    gamePage.tick();
+    fps.counter++;
+    if (enableFF)
+        setTimeout(_updFunc, 1);
+    else {
+        TicksPerSecond = 5;
+        fps = {
+            current: 0,
+            counter: 0,
+            last: []
+        };
+        $('#fps').text(TicksPerSecond);
+    }
+}
+//Clear timer before restarting
+if (typeof fpstimer != "undefined") clearInterval(fpstimer);
+var fpstimer = 0;
 
-    toggle.on('change', function () {
-        if (toggle.is(':checked')) {
-            options.toggle[option] = true;
-            message('Enabled Auto ' + ucfirst(option));
-        } else {
-            options.toggle[option] = false;
-            message('Disable Auto ' + ucfirst(option));
-        }
-    });
-});
+function toggleFF() {
+    if (enableFF) {
+        enableFF = false;
+        clearInterval(fpstimer);
+        $("#botFF").css("font-weight", "normal");
+    } else {
+        enableFF = true;
+        fpstimer = setInterval(function() {
+            if (!enableFF)
+                return;
+            fps.current = fps.counter;
+            fps.counter = 0;
+            fps.last.unshift(fps.current);
+            if (fps.last.length > 30)
+                fps.last.pop();
+            TicksPerSecond = 0;
+            for (i in fps.last)
+                TicksPerSecond += fps.last[i];
+            TicksPerSecond /= fps.last.length;
+            $('#fps').text(Math.ceil(TicksPerSecond));
+        }, 1000);
+        $("#botFF").css("font-weight", "bold");
+        _updFunc();
+    }
+}
