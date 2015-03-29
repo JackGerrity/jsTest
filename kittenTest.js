@@ -4,6 +4,7 @@ var enableBuild = false;
 var enableFaith = false;
 var enableRes = false;
 var autoBuild = [];
+var enableHunt = false;
 var autoRes = [
                { condition: { resource: "catnip", limit: 0.95 }, 	action: { craft: "wood", amount: 300 } },
                { condition: { resource: "wood", limit: 0.97 }, 		action: { craft: "beam", amount: 100 } },
@@ -17,7 +18,7 @@ var autoRes = [
                                                                 	          { craft: "alloy", amount: 1 } ] },
                { condition: [ { resource: "ivory", limit: 1000000}, 
                               { resource: "gold", limit: 0.5 } ], 	action: { trade: 3, amount: 3 } },
-			   { condition: [ { resource: "slab", limit: 1000000}, 
+			   { condition: [ { resource: "slab", limit: 100000}, 
                               { resource: "gold", limit: 0.5 } ], 	action: { trade: 4, amount: 3 } },
                { condition: [ { resource: "titanium", limit: 0.97},
                               { resource: "gold", limit: 0.5 } ], 	action: { trade: 6, amount: 1 } },
@@ -37,7 +38,7 @@ autoRun = setInterval(function() {
 
     //Hunting
     var catpower = gamePage.resPool.get('manpower');
-    if (catpower.value / catpower.maxValue > 0.95) {
+    if (enableHunt && catpower.value / catpower.maxValue > 0.95) {
         $("a:contains('Send hunters')").click();
     }
 
@@ -143,12 +144,14 @@ function saveBot() {
     localStorage.setItem('enableRes', enableRes);
     localStorage.setItem('autoBuild', JSON.stringify(autoBuild));
     localStorage.setItem('autoRes', JSON.stringify(autoRes));
+	localStorage.setItem('enableHunt', enableBuild);
 }
 
 function loadBot() {
     enableBuild = localStorage.getItem('enableBuild') || enableBuild;
     enableFaith = localStorage.getItem('enableFaith', enableFaith) || enableFaith;
     enableRes = localStorage.getItem('enableRes', enableRes) || enableRes;
+	enableHunt = localStorage.getItem('enableHunt', enableHunt) || enableHunt;
     var tmp = localStorage.getItem('autoBuild');
     if (tmp)
         autoBuild = JSON.parse(tmp);
@@ -178,6 +181,8 @@ $('#game').append('\
 	<hr /> \
 	<b>AutoFaith:</b> \
 	<a id="toggleFaith" href="#" onclick="toggleFaith()">Enable</a><br>\
+	<b>AutoHunt:</b> \
+	<a id="toggleHunting" href="#" onclick="toggleHunting()">Enable</a><br>\
 </div>');
 
 function updateAutoRes() {
@@ -337,6 +342,17 @@ function toggleFaith() {
 }
 if (enableFaith)
     $("#toggleFaith").css("font-weight", "bold");
+
+function toggleHunting() {
+    enableHunt = !enableHunt;
+    if (enableHunt)
+        $("#toggleHunting").css("font-weight", "bold");
+    else
+        $("#toggleHunting").css("font-weight", "normal");
+    saveBot();
+}
+if (enableFaith)
+    $("#toggleHunting").css("font-weight", "bold");
 
 //Fast Forward
 var TicksPerSecond = 5;
