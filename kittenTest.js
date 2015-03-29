@@ -16,10 +16,10 @@ var autoRes = [
                { condition: { resource: "iron", limit: 0.95 }, 		action: { craft: "plate", amount: 10 } },
                { condition: { resource: "steel", limit: 5000 }, 	action: [ { craft: "gear", amount: 3 }, 
                                                                 	          { craft: "alloy", amount: 1 } ] },
-               { condition: [ { resource: "ivory", limit: 1000000}, 
-                              { resource: "gold", limit: 0.5 } ], 	action: { trade: 3, amount: 3 } },
-			   { condition: [ { resource: "slab", limit: 100000}, 
+               { condition: [ { resource: "slab", limit: 100000}, 
                               { resource: "gold", limit: 0.5 } ], 	action: { trade: 4, amount: 3 } },
+			   { condition: [ { resource: "ivory", limit: 100000}, 
+                              { resource: "gold", limit: 0.5 } ], 	action: { trade: 3, amount: 3 } },
                { condition: [ { resource: "titanium", limit: 0.97},
                               { resource: "gold", limit: 0.5 } ], 	action: { trade: 6, amount: 1 } },
                { condition: { resource: "furs", limit: 2500 }, 		action: { craft: "parchment", amount: 3 } },
@@ -28,7 +28,7 @@ var autoRes = [
                { condition: { resource: "compedium", limit: 500 }, 	action: { craft: "blueprint", amount: 1 } },
 			   { condition: [ { resource: "scaffold", limit: 1000},
                               { resource: "plate", limit: 10000 },
-							  { resource: "starchart", limit: 100 }							  ], 	action: { craft: "ship", amount: 1 } },
+							  { resource: "starchart", limit: 100 }], 	action: { craft: "ship", amount: 1 } },
           ];
 
 //Reset interval before creating new
