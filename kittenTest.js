@@ -17,6 +17,8 @@ var autoRes = [
                                                                 	          { craft: "alloy", amount: 1 } ] },
                { condition: [ { resource: "ivory", limit: 1000000}, 
                               { resource: "gold", limit: 0.5 } ], 	action: { trade: 3, amount: 3 } },
+			   { condition: [ { resource: "slab", limit: 1000000}, 
+                              { resource: "gold", limit: 0.5 } ], 	action: { trade: 4, amount: 3 } },
                { condition: [ { resource: "titanium", limit: 0.97},
                               { resource: "gold", limit: 0.5 } ], 	action: { trade: 6, amount: 1 } },
                { condition: { resource: "furs", limit: 2500 }, 		action: { craft: "parchment", amount: 3 } },
