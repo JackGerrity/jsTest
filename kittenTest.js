@@ -206,7 +206,7 @@ function updateAutoRes() {
     table.empty();
     table.append('<tr><th>Resource</th><th>Limit</th><th>Action</th><th>Amount</th></tr>');
     for (i in autoRes)
-        table.append('<tr style="background-color: ' + (i % 2 == 0 ? '#000000' : '#53121c') + '"><td>' +
+        table.append('<tr style="background-color: ' + (i % 2 == 0 ? '#4d7455' : '#476291') + '"><td>' +
             '<a id="resource' + i + '" href="#" onclick="enableResource(' + i + ')" style="font-weight: ' + (autoRes[i].enabled ? "bold" : "normal") + '">' +
             getCon(autoRes[i].condition, "resource") + '</a></td><td>' +
             getCon(autoRes[i].condition, "limit") + '</td><td>' +
