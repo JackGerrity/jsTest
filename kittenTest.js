@@ -207,7 +207,7 @@ function updateAutoRes() {
     table.append('<tr><th>Resource</th><th>Limit</th><th>Action</th><th>Amount</th></tr>');
     for (i in autoRes)
         table.append('<tr style="background-color: ' + (i % 2 == 0 ? '#FFF' : '#CCC') + '"><td>' +
-            '<a id="resource' + i + '" href="#" onclick="enableResource(' + i + ')" style="font-weight: ' + (autoRes[i].enabled ? "bold", 'color', color : "normal", 'color', color) + '">' +
+            '<a id="resource' + i + '" href="#" onclick="enableResource(' + i + ')" style="font-weight: ' + (autoRes[i].enabled ? "bold" : "normal") + '">' +
             getCon(autoRes[i].condition, "resource") + '</a></td><td>' +
             getCon(autoRes[i].condition, "limit") + '</td><td>' +
             getAct(autoRes[i].action) + '</td><td>' +
@@ -239,7 +239,7 @@ function updateAutoBuild() {
         i++;
         if (i == 1)
             str += '<tr>';
-        str += '<td><a id="building' + j + '" href="#" onclick="enableBuilding(' + j + ')" style="font-weight: ' + (buildings[j].enabled ? "bold", 'color', color : "normal", 'color', color) + '">' + buildings[j].name + '</a></td>';
+        str += '<td><a id="building' + j + '" href="#" onclick="enableBuilding(' + j + ')" style="font-weight: ' + (buildings[j].enabled ? "bold" : "normal") + '">' + buildings[j].name + '</a></td>';
         if (i == 3) {
             str += '</tr>';
             i = 0;
@@ -283,20 +283,25 @@ function calcResource(j) {
 // Toggle Functions
 function enableResource(j) {
     autoRes[j].enabled = !autoRes[j].enabled;
-    if (autoRes[j].enabled)
-        $("#resource" + j).css("font-weight", "bold", 'color', color);
-    else
-        $("#resource" + j).css("font-weight", "normal", 'color', color);
+    if (autoRes[j].enabled) {
+        $("#resource" + j).css("font-weight", "bold");
+		$("#resource" + j).css('color', color);
+    } else {
+        $("#resource" + j).css("font-weight", "normal");
+		$("#resource" + j).css('color', color);
+	}
     saveBot();
 }
 
 function enableBuilding(j) {
     buildings[j].enabled = !buildings[j].enabled;
     if (buildings[j].enabled) {
-        $("#building" + j).css("font-weight", "bold", 'color', color);
+        $("#building" + j).css("font-weight", "bold");
+		$("#building" + j).css('color', color);
         autoBuild.push(buildings[j].name);
     } else {
-        $("#building" + j).css("font-weight", "normal", 'color', color);
+        $("#building" + j).css("font-weight", "normal");
+		$("#building" + j).css('color', color);
         autoBuild.splice(autoBuild.indexOf(buildings[j].name), 1);
     }
     saveBot();
@@ -305,35 +310,35 @@ function enableBuilding(j) {
 function toggleBuild() {
     enableBuild = !enableBuild;
     if (enableBuild)
-        $("#toggleBuild").css("font-weight", "bold", 'color', color);
+        $("#toggleBuild").css("font-weight", "bold");
     else
-        $("#toggleBuild").css("font-weight", "normal", 'color', color);
+        $("#toggleBuild").css("font-weight", "normal");
     saveBot();
 }
 if (enableBuild)
-    $("#toggleBuild").css("font-weight", "bold", 'color', color);
+    $("#toggleBuild").css("font-weight", "bold");
 
 function toggleRes() {
     enableRes = !enableRes;
     if (enableRes)
-        $("#toggleRes").css("font-weight", "bold", 'color', color);
+        $("#toggleRes").css("font-weight", "bold");
     else
-        $("#toggleRes").css("font-weight", "normal", 'color', color);
+        $("#toggleRes").css("font-weight", "normal");
     saveBot();
 }
 if (enableRes)
-    $("#toggleRes").css("font-weight", "bold", 'color', color);
+    $("#toggleRes").css("font-weight", "bold");
 
 function toggleFaith() {
     enableFaith = !enableFaith;
     if (enableFaith)
-        $("#toggleFaith").css("font-weight", "bold", 'color', color);
+        $("#toggleFaith").css("font-weight", "bold");
     else
-        $("#toggleFaith").css("font-weight", "normal", 'color', color);
+        $("#toggleFaith").css("font-weight", "normal");
     saveBot();
 }
 if (enableFaith)
-    $("#toggleFaith").css("font-weight", "bold", 'color', color);
+    $("#toggleFaith").css("font-weight", "bold");
 
 //Fast Forward
 var TicksPerSecond = 5;
@@ -367,7 +372,7 @@ function toggleFF() {
     if (enableFF) {
         enableFF = false;
         clearInterval(fpstimer);
-        $("#botFF").css("font-weight", "normal", 'color', color);
+        $("#botFF").css("font-weight", "normal");
     } else {
         enableFF = true;
         fpstimer = setInterval(function() {
@@ -384,7 +389,7 @@ function toggleFF() {
             TicksPerSecond /= fps.last.length;
             $('#fps').text(Math.ceil(TicksPerSecond));
         }, 1000);
-        $("#botFF").css("font-weight", "bold", 'color', color);
+        $("#botFF").css("font-weight", "bold");
         _updFunc();
     }
 }
