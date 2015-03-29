@@ -285,10 +285,8 @@ function enableResource(j) {
     autoRes[j].enabled = !autoRes[j].enabled;
     if (autoRes[j].enabled) {
         $("#resource" + j).css("font-weight", "bold");
-		$("#resource" + j).css('color', color);
     } else {
         $("#resource" + j).css("font-weight", "normal");
-		$("#resource" + j).css('color', color);
 	}
     saveBot();
 }
@@ -297,11 +295,9 @@ function enableBuilding(j) {
     buildings[j].enabled = !buildings[j].enabled;
     if (buildings[j].enabled) {
         $("#building" + j).css("font-weight", "bold");
-		$("#building" + j).css('color', color);
         autoBuild.push(buildings[j].name);
     } else {
         $("#building" + j).css("font-weight", "normal");
-		$("#building" + j).css('color', color);
         autoBuild.splice(autoBuild.indexOf(buildings[j].name), 1);
     }
     saveBot();
