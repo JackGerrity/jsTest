@@ -26,6 +26,9 @@ var autoRes = [
                { condition: { resource: "parchment", limit: 2550 }, 	action: { craft: "manuscript", amount: 3 } },
                { condition: { resource: "manuscript", limit: 1500 }, 	action: { craft: "compedium", amount: 1 } },
                { condition: { resource: "compedium", limit: 500 }, 	action: { craft: "blueprint", amount: 1 } },
+			   { condition: [ { resource: "scaffold", limit: 1000},
+                              { resource: "plate", limit: 10000 },
+							  { resource: "starchart", limit: 100 }							  ], 	action: { craft: "ship", amount: 1 } },
           ];
 
 //Reset interval before creating new
